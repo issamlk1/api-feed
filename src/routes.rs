@@ -35,6 +35,6 @@ pub async fn trigger_fetch(
     State(pool): State<SqlitePool>,
 ) -> Json<Value> {
     let url = std::env::var("FETCH_URL").unwrap();
-    fetcher::fetch_and_store(&pool, &url).await;
+    fetch_and_store(&pool, &url).await;
     Json(json!({ "status": "done" }))
 }
