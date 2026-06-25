@@ -14,6 +14,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let database_url = std::env::var("DATABASE_URL")?;
     let fetch_url    = std::env::var("FETCH_URL")?;
+    let app_port     = std::env::var("APP_PORT").unwrap_or_else(|_| "3000".to_string());
     let fetch_url    = Arc::new(fetch_url);
 
     let pool = db::init_pool(&database_url).await?;
@@ -45,8 +46,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/fetch", post(routes::trigger_fetch))
         .with_state(pool);
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
-    println!("Listening on http://0.0.0.0:3000");
+    let address = format!("0.0.0.0:{app_port}");
+    let listener = tokio::net::TcpListener::bind(&address).await?;
+    println!("Listening on http://{address}");
     axum::serve(listener, app).await?;
     Ok(())
 }
