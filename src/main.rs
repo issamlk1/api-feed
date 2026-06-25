@@ -21,20 +21,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // --- Cron: fetch ---
     let scheduler = JobScheduler::new().await?;
-    let cron_pool = pool.clone();
-    let cron_url  = fetch_url.clone();
 
-    let cron_schedule = std::env::var("CRON_SCHEDULE")?;
-    scheduler.add(
-        Job::new_async(cron_schedule.as_str(), move |_, _| {
-            let p = cron_pool.clone();
-            let u = cron_url.clone();
-            Box::pin(async move {
-                fetcher::fetch_and_store(&p, &u).await;
-            })
-        })?
-    ).await?;
+  let cron_schedules = std::env::var("CRON_SCHEDULES")?;
 
+    for cron_schedule in cron_schedules.split(',').map(str::trim).filter(|s| !s.is_empty()) {
+        let cron_pool = pool.clone();
+        let cron_url = fetch_url.clone();
+        scheduler.add(
+            Job::new_async(cron_schedule, move |_, _| {
+                let p = cron_pool.clone();
+                let u = cron_url.clone();
+                Box::pin(async move {
+                    fetcher::fetch_and_store(&p, &u).await;
+                })
+            })?
+        ).await?;
+    }
     scheduler.start().await?;
 
     fetcher::fetch_and_store(&pool, &fetch_url).await;
