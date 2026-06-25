@@ -1,8 +1,12 @@
-use axum::{extract::{Query, State}, response::Json};
+use axum::{extract::{Query, State}, http::StatusCode, response::Json};
 use chrono::Utc;
 use serde_json::{json, Value};
 use sqlx::SqlitePool;
 use crate::{auth::ApiKey, models::DateQuery, fetcher::fetch_and_store};
+
+pub async fn health() -> Json<Value> {
+    Json(json!({ "status": "ok" }))
+}
 
 pub async fn get_records(
     _: ApiKey,
@@ -33,8 +37,12 @@ pub async fn get_records(
 pub async fn trigger_fetch(
     _: ApiKey,
     State(pool): State<SqlitePool>,
-) -> Json<Value> {
-    let url = std::env::var("FETCH_URL").unwrap();
+) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
+    let url = std::env::var("FETCH_URL").map_err(|_| (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        Json(json!({ "error": "FETCH_URL is not configured." })),
+    ))?;
+
     fetch_and_store(&pool, &url).await;
-    Json(json!({ "status": "done" }))
+    Ok(Json(json!({ "status": "done" })))
 }
