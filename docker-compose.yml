@@ -8,14 +8,3 @@ services:
     volumes:
       - ./data:/app/data   
     restart: unless-stopped
-
-  cloudbeaver:
-    image: dbeaver/cloudbeaver:latest
-    container_name: cloudbeaver
-    volumes:
-      - ./data:/data/db
-      - cloudbeaver_data:/opt/cloudbeaver/workspace
-    restart: unless-stopped
-
-volumes:
-  cloudbeaver_data:
